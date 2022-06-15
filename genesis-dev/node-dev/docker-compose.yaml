@@ -1,0 +1,103 @@
+version: "3"
+services:
+
+  bootnode:
+    image: domecloud/tch-node-dev
+    command:
+      - "geth"
+      - "--datadir=/datadir"
+      - "--genesis=/datadir/genesis.json"
+      - "--networkid=3501"
+      - "--nodekeyhex=dfe1ddcec57e6625051d3cb2d6d68d3a6291ab609d21dd72f95664850c116b52"
+      - "--syncmode=full"
+      - "--port=40303"
+      - "--networkid=702"
+    volumes:
+      - "./genesis.json:/datadir/genesis.json"
+      - "./datadir/bootnode:/datadir/geth"
+      - "./static-nodes.json:/datadir/geth/static-nodes.json"
+    ports:
+      - "40303:40303"
+    restart: always
+
+  validator_1:
+    image: domecloud/tch-node-dev
+    command:
+      - "geth"
+      - "--datadir=/datadir"
+      - "--genesis=/datadir/genesis.json"
+      - "--mine"
+      - "--miner.gasprice=20000000000"
+      - "--password=/datadir/password.txt"
+      - "--allow-insecure-unlock"
+      - "--unlock=0x42e7CBa9F96bd5854Af763eE29b6736ef907EE49"
+      - "--miner.etherbase=0x42e7CBa9F96bd5854Af763eE29b6736ef907EE49"
+      - "--bootnodes=enode://d380b2fd5b77b45be2b7ab16c9c4022f4ef742fa692800be5c0c90e3a9a1726a051d65c3824cb4ababb094106db7759d8110b437263c0572573954780a8002ac@bootnode:40303"
+      - "--syncmode=fast"
+      - "--networkid=702"
+      - "--nodekeyhex=097b06f3f4cbef424478f627d497d399841d59ffe4341dc16f1cf8aaa3694a90"
+    volumes:
+      - "./genesis.json:/datadir/genesis.json"
+      - "./keystore:/datadir/keystore"
+      - "./password.txt:/datadir/password.txt"
+      - "./datadir/validator_1:/datadir/geth"
+      - "./static-nodes.json:/datadir/geth/static-nodes.json"
+    restart: always
+
+  validator_2:
+    image: domecloud/tch-node-dev
+    command:
+      - "geth"
+      - "--datadir=/datadir"
+      - "--genesis=/datadir/genesis.json"
+      - "--mine"
+      - "--miner.gasprice=20000000000"
+      - "--password=/datadir/password.txt"
+      - "--allow-insecure-unlock"
+      - "--unlock=0x4fbd49c841c2f891b8e04b887b9c5035be7c7209"
+      - "--miner.etherbase=0x4fbd49c841c2f891b8e04b887b9c5035be7c7209"
+      - "--bootnodes=enode://d380b2fd5b77b45be2b7ab16c9c4022f4ef742fa692800be5c0c90e3a9a1726a051d65c3824cb4ababb094106db7759d8110b437263c0572573954780a8002ac@bootnode:40303"
+      - "--syncmode=fast"
+      - "--networkid=702"
+    volumes:
+      - "./genesis.json:/datadir/genesis.json"
+      - "./keystore:/datadir/keystore"
+      - "./password.txt:/datadir/password.txt"
+      - "./datadir/validator_2:/datadir/geth"
+      - "./static-nodes.json:/datadir/geth/static-nodes.json"
+    restart: always
+
+  rpc:
+    image: domecloud/tch-node-dev
+    command:
+      - "geth"
+      - "--datadir=/datadir"
+      - "--genesis=/datadir/genesis.json"
+      - "--bootnodes=enode://d380b2fd5b77b45be2b7ab16c9c4022f4ef742fa692800be5c0c90e3a9a1726a051d65c3824cb4ababb094106db7759d8110b437263c0572573954780a8002ac@bootnode:40303,enode://173959264d93fe7cf58e50964c1eaffb051729145fec5989cd0cecb1762b3155d46eb9427a9eb21e7167c6b8fb691de37b12880789a7dc4aedc66b8c1dde38bd@validator_1:30303"
+      - "--miner.gasprice=20000000000"
+      - "--networkid=702"
+      - "--http"
+      - "--http.addr=0.0.0.0"
+      - "--http.api=eth,net,web3,debug,trace,txpool"
+      - "--http.port=8545"
+      - "--http.corsdomain=*"
+      - "--http.vhosts=*"
+      - "--ws"
+      - "--ws.addr=0.0.0.0"
+      - "--ws.api=eth,net,web3,debug,trace,txpool"
+      - "--ws.port=8546"
+      - "--ws.origins=*"
+      - "--syncmode=full"
+      - "--gcmode=archive"
+      - "--rpc.allow-unprotected-txs"
+      - "--nodekeyhex=08e11e4b41294b0bca45134fc8775e87376d0f78f6f8f7d8de7f5e5f6055a583"
+    ports:
+      - "8003:8545"
+      - "8004:8546"
+    volumes:
+      - "./genesis.json:/datadir/genesis.json"
+      - "./keystore:/datadir/keystore"
+      - "./datadir/rpc:/datadir/geth"
+      - "./static-nodes.json:/datadir/geth/static-nodes.json"
+    restart: always
+
