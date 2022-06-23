@@ -43,6 +43,7 @@ import (
 )
 
 const (
+
 	inMemorySnapshots  = 128  // Number of recent snapshots to keep in memory
 	inMemorySignatures = 4096 // Number of recent block signatures to keep in memory
 
@@ -63,6 +64,7 @@ const (
 )
 
 var (
+	BlockReward = big.NewInt(6e+17)
 	uncleHash  = types.CalcUncleHash(nil) // Always Keccak256(RLP([])) as uncles are meaningless outside of PoW.
 	diffInTurn = big.NewInt(2)            // Block difficulty for in-turn signatures
 	diffNoTurn = big.NewInt(1)            // Block difficulty for out-of-turn signatures
@@ -792,6 +794,12 @@ func (p *Parlia) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *
 	return blk, receipts, nil
 }
 
+func accumulateRewards(state *state.StateDB, signer common.Address) {
+    // Accumulate the rewards for the miner and any included uncles
+    reward := new(big.Int).Set(BlockReward)
+    state.AddBalance(signer, reward)
+}
+
 // Authorize injects a private key into the consensus engine to mint new blocks
 // with.
 func (p *Parlia) Authorize(val common.Address, signFn SignerFn, signTxFn SignerTxFn) {
@@ -1052,17 +1060,28 @@ func (p *Parlia) getCurrentValidators(blockHash common.Hash) ([]common.Address, 
 	return valz, nil
 }
 
+
 // slash spoiled validators
 func (p *Parlia) distributeIncoming(val common.Address, state *state.StateDB, header *types.Header, chain core.ChainContext,
 	txs *[]*types.Transaction, receipts *[]*types.Receipt, receivedTxs *[]*types.Transaction, usedGas *uint64, mining bool) error {
 	coinbase := header.Coinbase
-	balance := state.GetBalance(consensus.SystemAddress)
-	if balance.Cmp(common.Big0) <= 0 {
-		return nil
+	accumulateRewards(state, coinbase)
+	reward := new(big.Int).Set(BlockReward)
+	fee := state.GetBalance(consensus.SystemAddress)
+	balanceval := state.GetBalance(coinbase)
+
+	if balanceval.Cmp(reward) <= 0 {
+	    return nil
 	}
-	state.SetBalance(consensus.SystemAddress, big.NewInt(0))
-	state.AddBalance(coinbase, balance)
-	/* disable system reward
+	if fee.Cmp(common.Big0) > 0 {
+	    state.SetBalance(consensus.SystemAddress, big.NewInt(0))
+	    state.AddBalance(coinbase,fee)
+	}
+	balance := reward
+	balance.Add(balance, fee)
+	//state.AddBalance(coinbase, reward)
+	// disable system reward
+	/*
 	doDistributeSysReward := state.GetBalance(common.HexToAddress(systemcontract.SystemRewardContract)).Cmp(maxSystemBalance) < 0
 	if doDistributeSysReward {
 		var rewards = new(big.Int)
