@@ -1,2 +1,0 @@
-BAS Genesis Config
-==================
