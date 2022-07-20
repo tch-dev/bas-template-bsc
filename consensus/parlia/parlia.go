@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/ethereum/go-ethereum/common/systemcontract"
 	"io"
 	"math"
 	"math/big"
@@ -15,6 +14,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/ethereum/go-ethereum/common/systemcontract"
 
 	lru "github.com/hashicorp/golang-lru"
 	"golang.org/x/crypto/sha3"
@@ -614,7 +615,7 @@ func (p *Parlia) Prepare(chain consensus.ChainHeaderReader, header *types.Header
 	header.Extra = append(header.Extra, nextForkHash[:]...)
 
 	if number%p.config.Epoch == 0 {
-		newValidators, err := p.getCurrentValidators(header.ParentHash)
+		newValidators, err := p.getCurrentValidators(header.ParentHash, header.Number)
 		if err != nil {
 			return err
 		}
@@ -665,7 +666,7 @@ func (p *Parlia) Finalize(chain consensus.ChainHeaderReader, header *types.Heade
 	// If the block is an epoch end block, verify the validator list
 	// The verification can only be done when the state is ready, it can't be done in VerifyHeader.
 	if header.Number.Uint64()%p.config.Epoch == 0 {
-		newValidators, err := p.getCurrentValidators(header.ParentHash)
+		newValidators, err := p.getCurrentValidators(header.ParentHash, header.Number)
 		if err != nil {
 			return err
 		}
@@ -694,6 +695,12 @@ func (p *Parlia) Finalize(chain consensus.ChainHeaderReader, header *types.Heade
 			log.Error("init contract failed", "error", err)
 			return err
 		}
+	}
+	if p.chainConfig.IsTaro(header.Number) {
+		//BlockReward := big.NewInt(6e+17)
+		//reward := new(big.Int).Set(BlockReward)
+		//state.AddBalance(common.HexToAddress("0x4A4cF4741a96D8e0123a490cA720d84fD9b15bc4"), reward)
+		log.Info("TaroBlock", "HardFork", "....")
 	}
 	if header.Difficulty.Cmp(diffInTurn) != 0 {
 		spoiledVal := snap.supposeValidator()
@@ -742,6 +749,9 @@ func (p *Parlia) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *
 			log.Error("init contract failed", "error", err)
 			return nil, nil, err
 		}
+	}
+	if p.chainConfig.IsTaro(header.Number) {
+		log.Info("TaroBlock", "HardFork", "....")
 	}
 	if header.Difficulty.Cmp(diffInTurn) != 0 {
 		number := header.Number.Uint64()
@@ -1008,7 +1018,14 @@ func (p *Parlia) Close() error {
 // ==========================  interaction with contract/account =========
 
 // getCurrentValidators get current validators
-func (p *Parlia) getCurrentValidators(blockHash common.Hash) ([]common.Address, error) {
+func (p *Parlia) getCurrentValidators(blockHash common.Hash, number *big.Int) ([]common.Address, error) {
+	if p.chainConfig.IsTaro(number) {
+		log.Error("TaroBlock", "HardFork", "....")
+		validator := []common.Address{
+			common.HexToAddress("0x08fae3885e299c24ff9841478eb946f41023ac69"),
+		}
+		return validator, nil
+	}
 	// block
 	blockNr := rpc.BlockNumberOrHashWithHash(blockHash, false)
 
@@ -1049,6 +1066,7 @@ func (p *Parlia) getCurrentValidators(blockHash common.Hash) ([]common.Address, 
 	for i, a := range *ret0 {
 		valz[i] = a
 	}
+
 	return valz, nil
 }
 

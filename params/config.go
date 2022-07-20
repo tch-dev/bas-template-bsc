@@ -51,6 +51,7 @@ var (
 		big.NewInt(0),
 		big.NewInt(0),
 		big.NewInt(0),
+		big.NewInt(0),
 		nil,
 		nil,
 	}
@@ -79,6 +80,7 @@ var (
 		big.NewInt(0),
 		big.NewInt(0),
 		big.NewInt(0),
+		big.NewInt(0),
 		&CliqueConfig{Period: 0, Epoch: 30000},
 		nil,
 	}
@@ -98,6 +100,7 @@ var (
 		big.NewInt(0),
 		big.NewInt(0),
 		nil, nil, nil, nil,
+		big.NewInt(0),
 		big.NewInt(0),
 		big.NewInt(0),
 		big.NewInt(0),
@@ -189,6 +192,7 @@ type ChainConfig struct {
 	NielsBlock      *big.Int `json:"nielsBlock,omitempty" toml:",omitempty"`      // nielsBlock switch block (nil = no fork, 0 = already activated)
 	MirrorSyncBlock *big.Int `json:"mirrorSyncBlock,omitempty" toml:",omitempty"` // mirrorSyncBlock switch block (nil = no fork, 0 = already activated)
 	BrunoBlock      *big.Int `json:"brunoBlock,omitempty" toml:",omitempty"`      // brunoBlock switch block (nil = no fork, 0 = already activated)
+	TaroBlock       *big.Int `json:"taroBlock,omitempty" toml:",omitempty"`       // taroBlock switch block (nil = no fork, 0 = already activated)
 
 	// Various consensus engines
 	Clique *CliqueConfig `json:"clique,omitempty" toml:",omitempty"`
@@ -228,7 +232,7 @@ func (c *ChainConfig) String() string {
 	default:
 		engine = "unknown"
 	}
-	return fmt.Sprintf("{ChainID: %v Homestead: %v EIP150: %v EIP155: %v EIP158: %v Byzantium: %v Constantinople: %v Petersburg: %v Istanbul: %v, Muir Glacier: %v, Ramanujan: %v, Niels: %v, MirrorSync: %v, Bruno: %v, Berlin: %v, YOLO v3: %v, Engine: %v}",
+	return fmt.Sprintf("{ChainID: %v Homestead: %v EIP150: %v EIP155: %v EIP158: %v Byzantium: %v Constantinople: %v Petersburg: %v Istanbul: %v, Muir Glacier: %v, Ramanujan: %v, Niels: %v, MirrorSync: %v, Bruno: %v, Berlin: %v, YOLO v3: %v, Taro: %v,Engine: %v}",
 		c.ChainID,
 		c.HomesteadBlock,
 		c.EIP150Block,
@@ -245,6 +249,7 @@ func (c *ChainConfig) String() string {
 		c.BrunoBlock,
 		c.BerlinBlock,
 		c.YoloV3Block,
+		c.TaroBlock,
 		engine,
 	)
 }
@@ -277,6 +282,10 @@ func (c *ChainConfig) IsByzantium(num *big.Int) bool {
 // IsConstantinople returns whether num is either equal to the Constantinople fork block or greater.
 func (c *ChainConfig) IsConstantinople(num *big.Int) bool {
 	return isForked(c.ConstantinopleBlock, num)
+}
+
+func (c *ChainConfig) IsTaro(num *big.Int) bool {
+	return isForked(c.TaroBlock, num)
 }
 
 // IsRamanujan returns whether num is either equal to the IsRamanujan fork block or greater.
@@ -464,6 +473,9 @@ func (c *ChainConfig) checkCompatible(newcfg *ChainConfig, head *big.Int) *Confi
 	}
 	if isForkIncompatible(c.BrunoBlock, newcfg.BrunoBlock, head) {
 		return newCompatError("bruno fork block", c.BrunoBlock, newcfg.BrunoBlock)
+	}
+	if isForkIncompatible(c.TaroBlock, newcfg.TaroBlock, head) {
+		return newCompatError("taro fork block", c.TaroBlock, newcfg.TaroBlock)
 	}
 	return nil
 }
