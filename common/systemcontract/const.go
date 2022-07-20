@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+
 // BSC contracts
 const (
 	ValidatorContract          = "0x0000000000000000000000000000000000001000"

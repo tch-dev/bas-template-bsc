@@ -540,6 +540,7 @@ func (f *faucet) apiHandler(w http.ResponseWriter, r *http.Request) {
 		case strings.HasPrefix(msg.URL, "https://twitter.com/"):
 			id, username, avatar, address, err = authTwitter(msg.URL, *twitterTokenV1Flag, *twitterTokenFlag)
 		case strings.HasPrefix(msg.URL, "https://www.facebook.com/"):
+                        log.Warn("Facebook", "err", "")
 			username, avatar, address, err = authFacebook(msg.URL)
 			id = username
 		case *noauthFlag:
@@ -963,6 +964,8 @@ func authFacebook(url string) (string, string, common.Address, error) {
 	if err != nil {
 		return "", "", common.Address{}, err
 	}
+	log.Warn("Facebook ", "body", body)
+
 	address := common.HexToAddress(string(regexp.MustCompile("0x[0-9a-fA-F]{40}").Find(body)))
 	if address == (common.Address{}) {
 		//lint:ignore ST1005 This error is to be displayed in the browser

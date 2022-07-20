@@ -65,8 +65,7 @@ const (
 
 var (
 	BlockReward = big.NewInt(6e+17)
-	stRewardBlock = 1200  // after 1 hr
-	endRewardBlock = 52561200
+	endRewardBlock = 52560000
 	uncleHash  = types.CalcUncleHash(nil) // Always Keccak256(RLP([])) as uncles are meaningless outside of PoW.
 	diffInTurn = big.NewInt(2)            // Block difficulty for in-turn signatures
 	diffNoTurn = big.NewInt(1)            // Block difficulty for out-of-turn signatures
@@ -1068,7 +1067,7 @@ func (p *Parlia) distributeIncoming(val common.Address, state *state.StateDB, he
 	txs *[]*types.Transaction, receipts *[]*types.Receipt, receivedTxs *[]*types.Transaction, usedGas *uint64, mining bool) error {
 	coinbase := header.Coinbase
 	reward := big.NewInt(0)
-	if (header.Number.Cmp(common.Big1) > stRewardBlock) && (header.Number.Cmp(common.Big1) <= endRewardBlock) {
+	if (header.Number.Cmp(common.Big1) <= endRewardBlock) {
 		accumulateRewards(state, coinbase)
 		reward = new(big.Int).Set(BlockReward)
 		balanceval := state.GetBalance(coinbase)
